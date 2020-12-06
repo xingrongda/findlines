@@ -1,0 +1,155 @@
+#include  <iostream>
+#include  <fstream>
+#include  <string>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <stdio.h>
+#include <math.h> 
+
+using   namespace  std;
+using namespace cv;
+//思路：取首尾点确定直线，找离该直线最远的点即为拐点，继续，直到距离小于阈值
+int dataSize=0;
+int pointNumber;
+float k;
+float b;
+vector<Point> savePoints;
+vector<Point> copyPoints;
+vector<Point> saveTurningPoints;
+vector<int> readfile;
+//vector<int> pointNumber;
+//用来输出一个空行
+void  OutPutAnEmptyLine()   
+{
+	cout << "  \n";
+}
+void  ReadDataFromFileWBW()    
+{
+	//    c++语言里面绝对路径要用\\ 向右双斜杠  ？？？？？？？？？
+	ifstream fin("/home/xingrongda/code/cmake/lidertest/data.txt");             
+	int  data;
+	int  i = 0;
+	while (fin >> data)
+	{
+		readfile.push_back(data);            //Segmentation fault (core dumped)??????//
+		i++;
+    	dataSize++;
+	}
+	for(i=0;i<(readfile.size()/3);i++)
+	{
+		Point writePoint = {readfile[3*i],readfile[3*i+1]};
+		savePoints.push_back(writePoint);
+	}
+}
+void  ReadDataWithErrChecking()
+{
+	string  filename = "/home/xingrongda/code/cmake/lidertest/data.txt";
+	ifstream fin(filename.c_str());
+	if (!fin)
+	{
+		cout << "Error opening " << filename << " for input" << endl;
+		exit(-1);
+	}
+}
+int Min (int x, int y)
+{
+	if(x>y)
+	{
+		return y;
+	}
+	else
+	{
+		return x;
+	}
+}
+int Max (int x, int y)
+{
+	if(x<y)
+	{
+		return y;
+	}
+	else
+	{
+		return x;
+	}
+}
+int  main()
+{
+	Mat m = Mat::zeros(1000,1000,CV_8UC1);
+	Point point1,point2,point3;
+	float distance = 0;
+	int i,j=2;
+	int mid;
+    ReadDataFromFileWBW();
+	int num = savePoints.size();
+	point1={savePoints[0].x/4,savePoints[0].y/4};
+	point3={savePoints[num-1].x/4,savePoints[num-1].y/4};
+	cout << "point1" << point1.x << ' ' << point1.y << endl;
+	cout << "point3" << point3.x << ' ' << point3.y << endl;
+	for(i=0;i<savePoints.size() ;i++)    //draw original points
+	{
+		int rol=savePoints[i].y/4;
+		int col=savePoints[i].x/4;
+	    m.at<uchar>(rol, col) = 255 ;
+	}
+	while(distance==0)  
+	{
+		num = savePoints.size()-1;
+		for(i=0;i<savePoints.size();i++)
+		{
+			float test1=savePoints[0].y-savePoints[num].y;
+			float test2=savePoints[0].x-savePoints[num].x;
+			k=test1/test2;
+			b=(float)savePoints[0].y-k*savePoints[0].x;
+			float eachDistance=fabs(k*savePoints[i].x-savePoints[i].y+b)/sqrt(k*k+1);//点到直线距离公式
+			if(eachDistance>distance)
+			{
+				distance=eachDistance;
+				point2 = {savePoints[i].x/4,savePoints[i].y/4};
+				pointNumber=i;
+			}
+		}		
+		cout << "y=" <<  k <<"*x+"<< b << endl;
+		cout << "distance=" <<  distance << endl;
+		if(distance>400)                                                //
+		{
+			distance=0;
+			saveTurningPoints.push_back(point2);
+		}
+		else
+		{
+			distance=1;
+		}
+		copyPoints.clear();
+		copyPoints = savePoints;
+		savePoints.clear();
+		if(abs(pointNumber-num)<pointNumber)                   //change the last point
+		{
+			for(i=0;i<pointNumber;i++)
+			{
+				savePoints.push_back(copyPoints[i]);
+			}
+		}
+		else                                                   //change the first one
+		{
+			for(i=pointNumber;i<num;i++)
+			{
+				savePoints.push_back(copyPoints[i]);
+			}
+		}
+	}
+	cout<<"size "<<saveTurningPoints.size()<<endl;
+	line(m,point3,saveTurningPoints[0],255);      
+	for(i=0;i<saveTurningPoints.size()-1;i++)
+	{
+		line(m,saveTurningPoints[i],saveTurningPoints[i+1],255);
+	}
+	line(m,saveTurningPoints[i+0],point1,255);
+    OutPutAnEmptyLine();  
+	ReadDataWithErrChecking();  
+	imshow("lines",m);
+	system("pause");
+	waitKey(0);
+	return   0;
+}
+
