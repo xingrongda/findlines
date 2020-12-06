@@ -1,0 +1,3 @@
+/home/xingrongda/code/cmake/lidertest/build/CMakeFiles/rebuild_cache.dir
+/home/xingrongda/code/cmake/lidertest/build/CMakeFiles/Test.dir
+/home/xingrongda/code/cmake/lidertest/build/CMakeFiles/edit_cache.dir
